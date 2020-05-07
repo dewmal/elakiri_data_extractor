@@ -43,7 +43,7 @@ type UserProfile struct {
 	TotalPost      int64
 	MemberStatus   string
 	ReputationRank int
-	TotalPageVisit int
+	TotalPageVisit int64
 	Friends        pq.StringArray `gorm:"type:VARCHAR(50)[];column:friend_list"`
 	LastVisitors   pq.StringArray `gorm:"type:VARCHAR(50)[];column:last_visitor_list"`
 }

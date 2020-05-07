@@ -21,7 +21,7 @@ func ExtractUserDetails(be *colly.HTMLElement, db *gorm.DB) {
 		statList = append(statList, element.Text)
 	})
 	joinDateVal := statList[0]
-	totalPost, _ := strconv.ParseInt(statList[1], 0, 0)
+	totalPost, _ := strconv.ParseInt(strings.Replace(statList[1], ",", "", -1), 0, 0)
 	joinDate, _ := time.Parse("01-02-2006", joinDateVal)
 
 	userName := be.ChildText("#username_box h1")
@@ -64,7 +64,8 @@ func ExtractUserDetails(be *colly.HTMLElement, db *gorm.DB) {
 
 		visitorList = append(visitorList, visitorId)
 	})
-
+	totalVisit := be.ChildText("#collapseobj_visitors div.block_row.block_footer strong")
+	totalVisitCount, _ := strconv.ParseInt(strings.Replace(totalVisit, ",", "", -1), 0, 0)
 	// Save user profile
 	userProfile := data.UserProfile{
 		UserName:       userName,
@@ -76,6 +77,7 @@ func ExtractUserDetails(be *colly.HTMLElement, db *gorm.DB) {
 		ReputationRank: reputationRank,
 		Friends:        friendList,
 		LastVisitors:   visitorList,
+		TotalPageVisit: totalVisitCount,
 	}
 	db.Save(&userProfile)
 
