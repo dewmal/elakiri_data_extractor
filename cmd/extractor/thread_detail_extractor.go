@@ -37,7 +37,7 @@ func ExtractThreadDetail(be *colly.HTMLElement, db *gorm.DB) {
 		var messageBodySource string
 		element.ForEach("div.vb_postbit", func(i int, element *colly.HTMLElement) {
 			htmlVal, _ := element.DOM.Html()
-			messageBody += htmlVal
+			messageBodySource += htmlVal
 		})
 		// Extract Quoted Texts
 
