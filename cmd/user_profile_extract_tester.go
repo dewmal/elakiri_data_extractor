@@ -10,7 +10,7 @@ import (
 	"webcrawler/cmd/extractor"
 )
 
-func main() {
+func tester() {
 	dsn := url.URL{
 		User:     url.UserPassword("postgres", "dewmal91"),
 		Scheme:   "postgres",

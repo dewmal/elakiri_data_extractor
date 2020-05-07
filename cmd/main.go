@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/gocolly/colly/v2"
+	"github.com/google/uuid"
 	"github.com/jinzhu/gorm"
 	"net/url"
 	"time"
@@ -10,7 +11,7 @@ import (
 	"webcrawler/cmd/extractor"
 )
 
-func mainr() {
+func main() {
 
 	dsn := url.URL{
 		User:     url.UserPassword("postgres", "dewmal91"),
@@ -38,9 +39,14 @@ func mainr() {
 	c.Limit(
 		&colly.LimitRule{
 			DomainGlob:  "*elakiri.*",
-			RandomDelay: 10 * time.Second,
-			Parallelism: 2,
+			RandomDelay: 5 * time.Second,
+			Parallelism: 4,
 		})
+
+	c.OnHTML("html", func(e *colly.HTMLElement) {
+		uniqueId, _ := uuid.Parse(e.Request.URL.String())
+		fmt.Println(uniqueId)
+	})
 
 	postDataCollector := c.Clone()
 	userDataCollector := c.Clone()
@@ -71,7 +77,12 @@ func mainr() {
 	})
 
 	userDataCollector.OnHTML("body", func(e *colly.HTMLElement) {
+		fmt.Println("Extracting user Data ", e.Request.URL.Query().Get("u"))
 		extractor.ExtractUserDetails(e, db)
+	})
+	postDataCollector.OnHTML("body", func(e *colly.HTMLElement) {
+		fmt.Println("Extracting Thread Data ", e.Request.URL.Query().Get("t"))
+		extractor.ExtractThreadDetail(e, db)
 	})
 
 	c.OnRequest(func(r *colly.Request) {
@@ -84,7 +95,7 @@ func mainr() {
 		fmt.Println("Visiting User Profile", r.URL)
 	})
 
-	c.Visit("http://www.elakiri.com/forum/showthread.php?t=1937671")
+	c.Visit("http://www.elakiri.com")
 
 	c.Wait()
 }
