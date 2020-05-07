@@ -2,6 +2,7 @@ package data
 
 import (
 	"github.com/jinzhu/gorm"
+	"github.com/lib/pq"
 	"time"
 )
 
@@ -18,6 +19,7 @@ var PostTypeEnum = &postType{
 
 type UserPost struct {
 	gorm.Model
+	PostId        string `gorm:"unique;not null"`
 	Username      string
 	UserId        string
 	Message       string
@@ -27,20 +29,23 @@ type UserPost struct {
 	PostType      Alias
 }
 
+type UserFriend struct {
+	UserName string
+	UserId   string
+}
+
 type UserProfile struct {
 	gorm.Model
-	UserName    string
-	UserId      string
-	JoinDateVal string
-	JoinDate    time.Time
-	TotalPost   int64
-}
-type UserProfileHasFriend struct {
-	gorm.Model
-	UserName   string
-	UserId     string
-	FriendName string
-	FriendId   string
+	UserName       string
+	UserId         string `gorm:"unique;not null"`
+	JoinDateVal    string
+	JoinDate       time.Time
+	TotalPost      int64
+	MemberStatus   string
+	ReputationRank int
+	TotalPageVisit int
+	Friends        pq.StringArray `gorm:"type:VARCHAR(50)[];column:friend_list"`
+	LastVisitors   pq.StringArray `gorm:"type:VARCHAR(50)[];column:last_visitor_list"`
 }
 
 type Thread struct {
