@@ -19,7 +19,8 @@ var PostTypeEnum = &postType{
 
 type UserPost struct {
 	gorm.Model
-	PostId        string `gorm:"unique;not null"`
+	PostId        int64 `gorm:"unique;not null"`
+	PostCount     int64
 	Username      string
 	UserId        int64
 	Message       string
@@ -57,7 +58,7 @@ type Thread struct {
 	ThreadId     int64 `gorm:"unique;not null"`
 	Title        string
 	PostDateTime time.Time
-	Categories   pq.StringArray `gorm:"type:VARCHAR(50)[];column:tags"`
+	Categories   pq.StringArray `gorm:"type:VARCHAR(50)[];column:categories"`
 	Tags         pq.StringArray `gorm:"type:VARCHAR(50)[];column:tags"`
 	Rating       int64
 }

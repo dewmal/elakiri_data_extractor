@@ -25,7 +25,7 @@ func ExtractThreadDetail(be *colly.HTMLElement, db *gorm.DB) {
 	var ownerId int64
 	var postTime time.Time
 
-	be.ForEachWithBreak("#posts div div.page", func(i int, element *colly.HTMLElement) bool {
+	be.ForEachWithBreak("div#posts div div.page", func(i int, element *colly.HTMLElement) bool {
 
 		usernameText := element.ChildText("a.bigusername")
 		userLink, _ := url.Parse(element.ChildAttr("a.bigusername", "href"))
@@ -33,7 +33,12 @@ func ExtractThreadDetail(be *colly.HTMLElement, db *gorm.DB) {
 
 		userLocation := strings.Replace(element.ChildTexts("div.postbit_box div")[2], "Location:", "", -1)
 
-		messageBody := "" //element.ChildTexts("div.vb_postbit")
+		messageBody := element.ChildTexts("div.vb_postbit")[0]
+		var messageBodySource string
+		element.ForEach("div.vb_postbit", func(i int, element *colly.HTMLElement) {
+			htmlVal, _ := element.DOM.Html()
+			messageBody += htmlVal
+		})
 		// Extract Quoted Texts
 
 		// Extract Time
@@ -43,20 +48,24 @@ func ExtractThreadDetail(be *colly.HTMLElement, db *gorm.DB) {
 
 		messageTime, _ := time.Parse("01-02-2006 03:04 PM", messageTimeString) //11-28-2019 11:31 AM
 
-		postLink, _ := url.Parse(element.ChildAttr("td.thread div a", "href"))
-		postId := postLink.Query().Get("p")
+		postLink, _ := url.Parse(element.ChildAttr("div div table.tborder tbody tr td.thead div.smallfont a", "href"))
+		postId, _ := strconv.ParseInt(postLink.Query().Get("p"), 0, 0)
 
-		up := data.UserPost{
-			PostId:        postId,
-			Username:      usernameText,
-			UserId:        userId,
-			Message:       messageBody,
-			MessageSource: messageBody,
-			PostTimeVal:   messageTimeString,
-			PostTime:      messageTime,
-			PostType:      data.PostTypeEnum.ThreadPost,
-			ThreadId:      threadId,
-		}
+		var up data.UserPost
+		db.Where(&data.UserPost{
+			PostId: postId,
+		}).FirstOrInit(&up)
+
+		up.ThreadId = threadId
+		up.PostId = postId
+		up.Username = usernameText
+		up.UserId = userId
+		up.Message = messageBody
+		up.MessageSource = messageBodySource
+		up.PostTimeVal = messageTimeString
+		up.PostTime = messageTime
+		up.PostType = data.PostTypeEnum.ThreadPost
+		up.ThreadId = threadId
 
 		db.Save(&up)
 
@@ -71,7 +80,7 @@ func ExtractThreadDetail(be *colly.HTMLElement, db *gorm.DB) {
 			ownerId = user.UserId
 			postTime = messageTime
 		}
-		return false
+		return true
 	})
 
 	var tags []string

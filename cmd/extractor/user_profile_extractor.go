@@ -105,12 +105,19 @@ func ExtractUserDetails(be *colly.HTMLElement, db *gorm.DB) {
 	be.ForEach("html body table tbody tr td div div.page div div#usercss.floatcontainer div#content_container div#content div#profile_tabs div#visitor_messaging.tborder.content_block div#collapseobj_visitor_messaging.block_content ol#message_list.alt1.block_row.list_no_decoration li", func(i int, element *colly.HTMLElement) {
 		usernameText := element.ChildText("a.username")
 		messageBody := element.ChildText(".visitor_message_body")
+
+		var messageBodySource string
+		element.ForEach(".visitor_message_body", func(i int, element *colly.HTMLElement) {
+			htmlVal, _ := element.DOM.Html()
+			messageBodySource += htmlVal
+		})
+
 		messageTimeString := element.ChildText(".visitor_message_date")
 		messageTime, _ := time.Parse("01-02-2006 03:04 PM", messageTimeString) //11-28-2019 11:31 AM
 		userLink, _ := url.Parse(element.ChildAttr("a.username", "href"))
 		userId, _ := strconv.ParseInt(userLink.Query().Get("u"), 0, 0)
 		postLink, _ := url.Parse(element.ChildAttr("ul li a", "href"))
-		postId := postLink.Query().Get("u1")
+		postId, _ := strconv.ParseInt(postLink.Query().Get("u1"), 0, 0)
 
 		if userId != 0 {
 			var vm data.UserPost
@@ -120,7 +127,7 @@ func ExtractUserDetails(be *colly.HTMLElement, db *gorm.DB) {
 			vm.Username = usernameText
 			vm.UserId = userId
 			vm.Message = messageBody
-			vm.MessageSource = messageBody
+			vm.MessageSource = messageBodySource
 			vm.PostTimeVal = messageTimeString
 			vm.PostTime = messageTime
 			vm.PostType = data.PostTypeEnum.VisitorPost
