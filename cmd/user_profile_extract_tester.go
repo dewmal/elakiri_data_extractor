@@ -29,10 +29,14 @@ func main() {
 	// Migrate the schema
 	db.AutoMigrate(&data.UserPost{})
 	db.AutoMigrate(&data.UserProfile{})
+	db.AutoMigrate(&data.Thread{})
 
 	c := colly.NewCollector()
 	c.OnHTML("body", func(be *colly.HTMLElement) {
-		extractor.ExtractUserDetails(be, db)
+		//extractor.ExtractUserDetails(be, db)
+		extractor.ExtractThreadDetail(be, db)
 	})
-	c.Visit("http://www.elakiri.com/forum/member.php?s=6c6b0f832ae57f4674e3cb8384e94947&u=189162")
+	c.Visit("http://www.elakiri.com/forum/showthread.php?t=1936562&page=203")
+	//c.Visit("http://www.elakiri.com/forum/member.php?u=565617")
+	//385820
 }

@@ -3,11 +3,34 @@ package main
 import (
 	"fmt"
 	"github.com/gocolly/colly/v2"
+	"github.com/jinzhu/gorm"
 	"net/url"
 	"time"
+	"webcrawler/cmd/data"
+	"webcrawler/cmd/extractor"
 )
 
-func olmain() {
+func mainr() {
+
+	dsn := url.URL{
+		User:     url.UserPassword("postgres", "dewmal91"),
+		Scheme:   "postgres",
+		Host:     fmt.Sprintf("%s:%d", "localhost", 5432),
+		Path:     "ek_crawler_db",
+		RawQuery: (&url.Values{"sslmode": []string{"disable"}}).Encode(),
+	}
+	db, err := gorm.Open("postgres", dsn.String())
+	db.LogMode(true)
+	if err != nil {
+		println(err)
+		panic("failed to connect database")
+	}
+	defer db.Close()
+
+	// Migrate the schema
+	db.AutoMigrate(&data.UserPost{})
+	db.AutoMigrate(&data.UserProfile{})
+
 	c := colly.NewCollector(
 		colly.AllowedDomains("elakiri.com", "www.elakiri.com"),
 		colly.CacheDir("./ek_cache"),
@@ -48,7 +71,7 @@ func olmain() {
 	})
 
 	userDataCollector.OnHTML("body", func(e *colly.HTMLElement) {
-
+		extractor.ExtractUserDetails(e, db)
 	})
 
 	c.OnRequest(func(r *colly.Request) {

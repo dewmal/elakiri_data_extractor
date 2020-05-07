@@ -21,12 +21,13 @@ type UserPost struct {
 	gorm.Model
 	PostId        string `gorm:"unique;not null"`
 	Username      string
-	UserId        string
+	UserId        int64
 	Message       string
 	MessageSource string
 	PostTimeVal   string
 	PostTime      time.Time
 	PostType      Alias
+	ThreadId      int64
 }
 
 type UserFriend struct {
@@ -37,19 +38,26 @@ type UserFriend struct {
 type UserProfile struct {
 	gorm.Model
 	UserName       string
-	UserId         string `gorm:"unique;not null"`
+	UserId         int64 `gorm:"unique;not null"`
 	JoinDateVal    string
 	JoinDate       time.Time
 	TotalPost      int64
 	MemberStatus   string
 	ReputationRank int
 	TotalPageVisit int64
-	Friends        pq.StringArray `gorm:"type:VARCHAR(50)[];column:friend_list"`
-	LastVisitors   pq.StringArray `gorm:"type:VARCHAR(50)[];column:last_visitor_list"`
+	Friends        pq.Int64Array `gorm:"type:BigInt[];column:friend_list"`
+	LastVisitors   pq.Int64Array `gorm:"type:BigInt[];column:last_visitor_list"`
+	Location       string
 }
 
 type Thread struct {
 	gorm.Model
-	OwnerUser string
-	OwnerId   string
+	OwnerUser    string
+	OwnerId      int64
+	ThreadId     int64 `gorm:"unique;not null"`
+	Title        string
+	PostDateTime time.Time
+	Categories   pq.StringArray `gorm:"type:VARCHAR(50)[];column:tags"`
+	Tags         pq.StringArray `gorm:"type:VARCHAR(50)[];column:tags"`
+	Rating       int64
 }
