@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/url"
 	"os"
+	"time"
 	"webcrawler/cmd/data"
 	"webcrawler/cmd/extractor"
 )
@@ -118,13 +119,12 @@ func main() {
 		colly.AllowedDomains("elakiri.com", "www.elakiri.com"),
 		colly.CacheDir("./ek_cache"),
 	)
-	//delay := 2 * time.Second
-	//c.Limit(
-	//	&colly.LimitRule{
-	//		DomainGlob:  "*elakiri.*",
-	//		RandomDelay: delay,
-	//		Parallelism: cfg.Crawler.CrawlerParallelCount,
-	//	})
+	delay := 2 * time.Second
+	c.Limit(
+		&colly.LimitRule{
+			DomainGlob:  "*elakiri.*",
+			RandomDelay: delay,
+		})
 	//
 	//c.OnHTML("html", func(e *colly.HTMLElement) {
 	//	uniqueId, _ := uuid.Parse(e.Request.URL.String())
@@ -141,7 +141,7 @@ func main() {
 		} else if pageUrl.Path == "/forum/member.php" {
 			userDataCollector.Visit(pageUrlString)
 		} else {
-			//c.Visit(pageUrlString)
+			c.Visit(pageUrlString)
 		}
 	}
 
