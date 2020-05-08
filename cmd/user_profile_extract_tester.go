@@ -37,6 +37,6 @@ func main() {
 		//extractor.ExtractThreadDetail(be, db)
 	})
 	//c.Visit("http://www.elakiri.com/forum/showthread.php?t=1937695")
-	c.Visit("http://www.elakiri.com/forum/member.php?u=494281")
+	c.Visit("http://www.elakiri.com/forum/member.php?u=20075")
 	//385820
 }

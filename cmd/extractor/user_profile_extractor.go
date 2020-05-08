@@ -59,8 +59,8 @@ func ExtractUserDetails(be *colly.HTMLElement, db *gorm.DB) {
 	var posRepCount int
 	var negRepCount int
 
-	be.ForEach("#reputation img", func(i int, element *colly.HTMLElement) {
-		isPosRep := strings.HasPrefix(element.Attr("src"), "pos.gif")
+	be.ForEach("div#usercss.floatcontainer div#content_container div#content div#main_userinfo.floatcontainer table tbody tr td#username_box div#reputation_rank div#reputation img.inlineimg", func(i int, element *colly.HTMLElement) {
+		isPosRep := strings.HasSuffix(element.Attr("src"), "pos.gif")
 		if isPosRep {
 			posRepCount += 1
 		} else {
@@ -68,7 +68,7 @@ func ExtractUserDetails(be *colly.HTMLElement, db *gorm.DB) {
 		}
 	})
 	reputationRank := posRepCount - negRepCount
-	println(reputationRank, posRepCount, negRepCount)
+	//println(reputationRank, posRepCount, negRepCount)
 
 	// Friend Detail
 	var friendList []int64
@@ -112,40 +112,40 @@ func ExtractUserDetails(be *colly.HTMLElement, db *gorm.DB) {
 	userProfile.TotalPageVisit = totalVisitCount
 
 	db.Save(&userProfile)
-	println(userProfile.ReputationRank)
+	//println(userProfile.ReputationRank)
 
-	//// User Visitor Messages
-	//be.ForEach("html body table tbody tr td div div.page div div#usercss.floatcontainer div#content_container div#content div#profile_tabs div#visitor_messaging.tborder.content_block div#collapseobj_visitor_messaging.block_content ol#message_list.alt1.block_row.list_no_decoration li", func(i int, element *colly.HTMLElement) {
-	//	usernameText := element.ChildText("a.username")
-	//	messageBody := element.ChildText(".visitor_message_body")
-	//
-	//	var messageBodySource string
-	//	element.ForEach(".visitor_message_body", func(i int, element *colly.HTMLElement) {
-	//		htmlVal, _ := element.DOM.Html()
-	//		messageBodySource += htmlVal
-	//	})
-	//
-	//	messageTimeString := element.ChildText(".visitor_message_date")
-	//	messageTime, _ := time.Parse("01-02-2006 03:04 PM", messageTimeString) //11-28-2019 11:31 AM
-	//	userLink, _ := url.Parse(element.ChildAttr("a.username", "href"))
-	//	userId, _ := strconv.ParseInt(userLink.Query().Get("u"), 0, 0)
-	//	postLink, _ := url.Parse(element.ChildAttr("ul li a", "href"))
-	//	postId, _ := strconv.ParseInt(postLink.Query().Get("u1"), 0, 0)
-	//
-	//	if userId != 0 {
-	//		var vm data.UserPost
-	//		db.Where(&data.UserPost{
-	//			PostId: postId,
-	//		}).FirstOrInit(&userProfile)
-	//		vm.Username = usernameText
-	//		vm.UserId = userId
-	//		vm.Message = messageBody
-	//		vm.MessageSource = messageBodySource
-	//		vm.PostTimeVal = messageTimeString
-	//		vm.PostTime = messageTime
-	//		vm.PostType = data.PostTypeEnum.VisitorPost
-	//		vm.PostId = postId
-	//		db.Save(&vm)
-	//	}
-	//})
+	// User Visitor Messages
+	be.ForEach("html body table tbody tr td div div.page div div#usercss.floatcontainer div#content_container div#content div#profile_tabs div#visitor_messaging.tborder.content_block div#collapseobj_visitor_messaging.block_content ol#message_list.alt1.block_row.list_no_decoration li", func(i int, element *colly.HTMLElement) {
+		usernameText := element.ChildText("a.username")
+		messageBody := element.ChildText(".visitor_message_body")
+
+		var messageBodySource string
+		element.ForEach(".visitor_message_body", func(i int, element *colly.HTMLElement) {
+			htmlVal, _ := element.DOM.Html()
+			messageBodySource += htmlVal
+		})
+
+		messageTimeString := element.ChildText(".visitor_message_date")
+		messageTime, _ := time.Parse("01-02-2006 03:04 PM", messageTimeString) //11-28-2019 11:31 AM
+		userLink, _ := url.Parse(element.ChildAttr("a.username", "href"))
+		userId, _ := strconv.ParseInt(userLink.Query().Get("u"), 0, 0)
+		postLink, _ := url.Parse(element.ChildAttr("ul li a", "href"))
+		postId, _ := strconv.ParseInt(postLink.Query().Get("u1"), 0, 0)
+
+		if userId != 0 {
+			var vm data.UserPost
+			db.Where(&data.UserPost{
+				PostId: postId,
+			}).FirstOrInit(&userProfile)
+			vm.Username = usernameText
+			vm.UserId = userId
+			vm.Message = messageBody
+			vm.MessageSource = messageBodySource
+			vm.PostTimeVal = messageTimeString
+			vm.PostTime = messageTime
+			vm.PostType = data.PostTypeEnum.VisitorPost
+			vm.PostId = postId
+			db.Save(&vm)
+		}
+	})
 }
