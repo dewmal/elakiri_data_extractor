@@ -130,7 +130,7 @@ func main() {
 
 	c.OnHTML("html", func(e *colly.HTMLElement) {
 		uniqueId, _ := uuid.Parse(e.Request.URL.String())
-		fmt.Println(uniqueId)
+		log.Println(uniqueId)
 	})
 
 	postDataCollector := c.Clone()
@@ -162,22 +162,22 @@ func main() {
 	})
 
 	userDataCollector.OnHTML("body", func(e *colly.HTMLElement) {
-		fmt.Println("Extracting user Data ", e.Request.URL.Query().Get("u"))
+		log.Println("Extracting user Data ", e.Request.URL.Query().Get("u"))
 		extractor.ExtractUserDetails(e, db)
 	})
 	postDataCollector.OnHTML("body", func(e *colly.HTMLElement) {
-		fmt.Println("Extracting Thread Data ", e.Request.URL.Query().Get("t"))
+		log.Println("Extracting Thread Data ", e.Request.URL.Query().Get("t"))
 		extractor.ExtractThreadDetail(e, db)
 	})
 
 	c.OnRequest(func(r *colly.Request) {
-		fmt.Println("Visiting", r.URL)
+		log.Println("Visiting", r.URL)
 	})
 	postDataCollector.OnRequest(func(r *colly.Request) {
-		fmt.Println("Visiting Thread", r.URL)
+		log.Println("Visiting Thread", r.URL)
 	})
 	userDataCollector.OnRequest(func(r *colly.Request) {
-		fmt.Println("Visiting User Profile", r.URL)
+		log.Println("Visiting User Profile", r.URL)
 	})
 
 	c.Visit("http://www.elakiri.com")
