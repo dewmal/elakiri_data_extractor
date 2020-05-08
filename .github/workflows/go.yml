@@ -31,7 +31,15 @@ jobs:
         fi
 
     - name: Build
-      run: go build -v .
+      run: go build -v ./cmd
 
     - name: Test
-      run: go test -v .
+      run: go test -v ./cmd
+    - name: go-cross-build
+      uses: thatisuday/go-cross-build@v1
+      with:
+        # Package (directory) in the module to build. By default, builds the module directory.
+        package: cmd # optional, default is 
+        # Compress each build file inside a ".tar.gz" archive.
+        compress: true # optional, default is false
+        # Binary executable filename and filenames prefix for the build files.
