@@ -15,7 +15,10 @@ import (
 Extract And Store Profile Details
 */
 func ExtractThreadDetail(be *colly.HTMLElement, db *gorm.DB) {
-
+	pageUrl := be.Request.URL
+	if pageUrl.Path != "/forum/showthread.php" {
+		return
+	}
 	baseURL := be.Request.URL
 	pageId := baseURL.Query().Get("page")
 	isOpenPage := pageId == "" || pageId == "1"

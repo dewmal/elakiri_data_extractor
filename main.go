@@ -114,16 +114,19 @@ func main() {
 	db.AutoMigrate(&data.UserPost{})
 	db.AutoMigrate(&data.UserProfile{})
 	db.AutoMigrate(&data.Thread{})
+	db.AutoMigrate(&data.ErrorVisitedUrl{})
 
 	c := colly.NewCollector(
 		colly.AllowedDomains("elakiri.com", "www.elakiri.com"),
 		colly.CacheDir("./ek_cache"),
+		colly.Async(true),
 	)
-	delay := 2 * time.Second
+	delay := 5 * time.Second
 	c.Limit(
 		&colly.LimitRule{
 			DomainGlob:  "*elakiri.*",
 			RandomDelay: delay,
+			Parallelism: cfg.Crawler.CrawlerParallelCount,
 		})
 	//
 	//c.OnHTML("html", func(e *colly.HTMLElement) {
@@ -160,12 +163,27 @@ func main() {
 	})
 
 	userDataCollector.OnHTML("body", func(e *colly.HTMLElement) {
-		log.Println("Extracting user Data ", e.Request.URL.Query().Get("u"))
-		extractor.ExtractUserDetails(e, db)
+
+		defer func() {
+			if err := recover(); err != nil {
+				errorHandling(e, db)
+				log.Printf("Recovering from panic in printAllOperations error is: %v \n", err)
+				log.Println("Extracting Thread Data ", e.Request.URL.Query().Get("t"))
+			}
+			extractor.ExtractUserDetails(e, db)
+		}()
 	})
 	postDataCollector.OnHTML("body", func(e *colly.HTMLElement) {
-		log.Println("Extracting Thread Data ", e.Request.URL.Query().Get("t"))
-		extractor.ExtractThreadDetail(e, db)
+
+		defer func() {
+			if err := recover(); err != nil {
+				errorHandling(e, db)
+				log.Printf("Recovering from panic in printAllOperations error is: %v \n", err)
+				log.Println("Extracting Thread Data ", e.Request.URL.Query().Get("t"))
+			}
+			extractor.ExtractThreadDetail(e, db)
+		}()
+
 	})
 
 	c.OnRequest(func(r *colly.Request) {
@@ -181,4 +199,11 @@ func main() {
 	c.Visit("http://www.elakiri.com")
 
 	c.Wait()
+}
+
+func errorHandling(be *colly.HTMLElement, db *gorm.DB) {
+	db.Create(&data.ErrorVisitedUrl{
+		VisitedUrl: be.Request.URL.String(),
+	})
+	log.Println("Fatal Error happened", "Visited URL ", be.Request.URL.String())
 }

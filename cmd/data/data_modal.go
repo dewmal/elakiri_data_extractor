@@ -62,3 +62,8 @@ type Thread struct {
 	Tags         pq.StringArray `gorm:"type:VARCHAR(50)[];column:tags"`
 	Rating       int64
 }
+
+type ErrorVisitedUrl struct {
+	gorm.Model
+	VisitedUrl string
+}

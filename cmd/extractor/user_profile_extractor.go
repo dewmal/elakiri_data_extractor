@@ -14,6 +14,10 @@ import (
 Extract And Store Profile Details
 */
 func ExtractUserDetails(be *colly.HTMLElement, db *gorm.DB) {
+	pageUrl := be.Request.URL
+	if pageUrl.Path != "/forum/member.php" {
+		return
+	}
 	userProfileId, _ := strconv.ParseInt(be.Request.URL.Query().Get("u"), 0, 0)
 
 	var statList []string
@@ -36,10 +40,17 @@ func ExtractUserDetails(be *colly.HTMLElement, db *gorm.DB) {
 		}
 		return true
 	})
+	var totalPost int64
+	var joinDate time.Time
+	var joinDateVal string
+	if len(statList) > joinDateIndex {
+		joinDateVal := statList[joinDateIndex]
+		joinDate, _ = time.Parse("01-02-2006", joinDateVal)
+	}
 
-	joinDateVal := statList[joinDateIndex]
-	totalPost, _ := strconv.ParseInt(strings.Replace(statList[TotalPostIndex], ",", "", -1), 0, 0)
-	joinDate, _ := time.Parse("01-02-2006", joinDateVal)
+	if len(statList) > TotalPostIndex {
+		totalPost, _ = strconv.ParseInt(strings.Replace(statList[TotalPostIndex], ",", "", -1), 0, 0)
+	}
 
 	userName := be.ChildText("#username_box h1")
 	memberStatus := be.ChildText("#username_box h2")
