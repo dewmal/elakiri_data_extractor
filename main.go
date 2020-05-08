@@ -4,13 +4,11 @@ import (
 	"flag"
 	"fmt"
 	"github.com/gocolly/colly/v2"
-	"github.com/google/uuid"
 	"github.com/jinzhu/gorm"
 	"gopkg.in/yaml.v2"
 	"log"
 	"net/url"
 	"os"
-	"time"
 	"webcrawler/cmd/data"
 	"webcrawler/cmd/extractor"
 )
@@ -120,18 +118,18 @@ func main() {
 		colly.AllowedDomains("elakiri.com", "www.elakiri.com"),
 		colly.CacheDir("./ek_cache"),
 	)
-	delay := 2 * time.Second
-	c.Limit(
-		&colly.LimitRule{
-			DomainGlob:  "*elakiri.*",
-			RandomDelay: delay,
-			Parallelism: cfg.Crawler.CrawlerParallelCount,
-		})
-
-	c.OnHTML("html", func(e *colly.HTMLElement) {
-		uniqueId, _ := uuid.Parse(e.Request.URL.String())
-		log.Println(uniqueId)
-	})
+	//delay := 2 * time.Second
+	//c.Limit(
+	//	&colly.LimitRule{
+	//		DomainGlob:  "*elakiri.*",
+	//		RandomDelay: delay,
+	//		Parallelism: cfg.Crawler.CrawlerParallelCount,
+	//	})
+	//
+	//c.OnHTML("html", func(e *colly.HTMLElement) {
+	//	uniqueId, _ := uuid.Parse(e.Request.URL.String())
+	//	log.Println(uniqueId)
+	//})
 
 	postDataCollector := c.Clone()
 	userDataCollector := c.Clone()
