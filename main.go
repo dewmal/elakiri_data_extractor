@@ -112,6 +112,7 @@ func main() {
 	// Migrate the schema
 	db.AutoMigrate(&data.UserPost{})
 	db.AutoMigrate(&data.UserProfile{})
+	db.AutoMigrate(&data.Thread{})
 
 	c := colly.NewCollector(
 		colly.AllowedDomains("elakiri.com", "www.elakiri.com"),
