@@ -17,8 +17,8 @@ import (
 
 type Config struct {
 	Crawler struct {
-		CrawlerParallelCount string `yaml:"parallelCount"`
-		Delay                string `yaml:"delay"`
+		CrawlerParallelCount int `yaml:"parallelCount"`
+		Delay                int `yaml:"delay"`
 		DB                   struct {
 			Host     string `yaml:"host"`
 			Port     string `yaml:"port"`
@@ -120,11 +120,12 @@ func main() {
 		colly.AllowedDomains("elakiri.com", "www.elakiri.com"),
 		colly.CacheDir("./ek_cache"),
 	)
+	delay := 2 * time.Second
 	c.Limit(
 		&colly.LimitRule{
 			DomainGlob:  "*elakiri.*",
-			RandomDelay: cfg.Crawler.Crawlers * time.Second,
-			Parallelism: 20,
+			RandomDelay: delay,
+			Parallelism: cfg.Crawler.CrawlerParallelCount,
 		})
 
 	c.OnHTML("html", func(e *colly.HTMLElement) {
