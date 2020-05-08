@@ -10,7 +10,7 @@ import (
 	"webcrawler/cmd/extractor"
 )
 
-func tester() {
+func main() {
 	dsn := url.URL{
 		User:     url.UserPassword("postgres", "dewmal91"),
 		Scheme:   "postgres",
@@ -33,10 +33,10 @@ func tester() {
 
 	c := colly.NewCollector()
 	c.OnHTML("body", func(be *colly.HTMLElement) {
-		//extractor.ExtractUserDetails(be, db)
-		extractor.ExtractThreadDetail(be, db)
+		extractor.ExtractUserDetails(be, db)
+		//extractor.ExtractThreadDetail(be, db)
 	})
-	c.Visit("http://www.elakiri.com/forum/showthread.php?t=1937695")
-	//c.Visit("http://www.elakiri.com/forum/member.php?u=565617")
+	//c.Visit("http://www.elakiri.com/forum/showthread.php?t=1937695")
+	c.Visit("http://www.elakiri.com/forum/member.php?u=494281")
 	//385820
 }
