@@ -1,0 +1,7 @@
+crawler:
+  db:
+    host: localhost
+    port: 5432
+    username: postgres
+    password: dewmal91
+    dataBase: ek_crawler_db

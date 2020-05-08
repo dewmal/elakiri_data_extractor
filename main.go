@@ -39,8 +39,8 @@ func main() {
 	c.Limit(
 		&colly.LimitRule{
 			DomainGlob:  "*elakiri.*",
-			RandomDelay: 2 * time.Second,
-			Parallelism: 10,
+			RandomDelay: 4 * time.Second,
+			Parallelism: 20,
 		})
 
 	c.OnHTML("html", func(e *colly.HTMLElement) {
