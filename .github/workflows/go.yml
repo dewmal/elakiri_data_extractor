@@ -31,10 +31,10 @@ jobs:
         fi
 
     - name: Build
-      run: go build ./cmd -v .
+      run: go build . ./cmd -v
 
     - name: Test
-      run: go test  ./cmd -v .
+      run: go test . ./cmd -v
     - name: go-cross-build
       uses: thatisuday/go-cross-build@v1
       with:
