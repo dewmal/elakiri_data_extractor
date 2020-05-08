@@ -1,3 +1,4 @@
 .idea
 ek_cache/
-config/*
+config/config.yaml
+config/crawler.yaml
