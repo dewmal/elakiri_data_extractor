@@ -66,6 +66,10 @@ func ExtractUserDetails(be *colly.HTMLElement, db *gorm.DB) {
 		} else {
 			negRepCount += 1
 		}
+		if strings.HasSuffix(element.Attr("src"), "balance.gif") {
+			posRepCount = 0
+			negRepCount = 0
+		}
 	})
 	reputationRank := posRepCount - negRepCount
 	//println(reputationRank, posRepCount, negRepCount)
