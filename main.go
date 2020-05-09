@@ -115,7 +115,7 @@ func init() {
 			println(err)
 			panic("failed to connect database")
 		}
-		db.DB().SetMaxIdleConns(10)
+		db.DB().SetMaxIdleConns(50)
 		db.DB().SetMaxOpenConns(1000)
 	})
 

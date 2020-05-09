@@ -86,7 +86,7 @@ func ExtractUserDetails(be *colly.HTMLElement, db *gorm.DB) {
 		var friendUser data.UserProfile
 		db.Where(&data.UserProfile{
 			UserId: friendId,
-		}).FirstOrInit(&friendUser)
+		}).FirstOrCreate(&friendUser)
 		friendUser.UserId = friendId
 		friendUser.UserName = friendUserName
 		db.Save(&friendUser)
@@ -106,7 +106,7 @@ func ExtractUserDetails(be *colly.HTMLElement, db *gorm.DB) {
 	var userProfile data.UserProfile
 	db.Where(&data.UserProfile{
 		UserId: userProfileId,
-	}).FirstOrInit(&userProfile)
+	}).FirstOrCreate(&userProfile)
 	userProfile.UserName = userName
 	userProfile.UserId = userProfileId
 	userProfile.JoinDateVal = joinDateVal
@@ -140,20 +140,20 @@ func ExtractUserDetails(be *colly.HTMLElement, db *gorm.DB) {
 		postId, _ := strconv.ParseInt(postLink.Query().Get("u1"), 0, 0)
 
 		if userId != 0 {
-			var vm data.UserPost
+			var up data.UserPost
 			db.Where(&data.UserPost{
 				PostId: postId,
-			}).FirstOrInit(&vm)
+			}).FirstOrCreate(&up)
 
-			vm.Username = usernameText
-			vm.UserId = userId
-			vm.Message = messageBody
-			vm.MessageSource = messageBodySource
-			vm.PostTimeVal = messageTimeString
-			vm.PostTime = messageTime
-			vm.PostType = data.PostTypeEnum.VisitorPost
-			vm.PostId = postId
-			db.Save(&vm)
+			up.Username = usernameText
+			up.UserId = userId
+			up.Message = messageBody
+			up.MessageSource = messageBodySource
+			up.PostTimeVal = messageTimeString
+			up.PostTime = messageTime
+			up.PostType = data.PostTypeEnum.VisitorPost
+			up.PostId = postId
+			db.Save(&up)
 		}
 	})
 	//return db.Commit().Error

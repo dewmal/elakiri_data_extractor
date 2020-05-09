@@ -58,7 +58,7 @@ func ExtractThreadDetail(be *colly.HTMLElement, db *gorm.DB) {
 		var up data.UserPost
 		db.Where(&data.UserPost{
 			PostId: postId,
-		}).FirstOrInit(&up)
+		}).FirstOrCreate(&up)
 
 		up.ThreadId = threadId
 		up.PostId = postId
@@ -74,7 +74,7 @@ func ExtractThreadDetail(be *colly.HTMLElement, db *gorm.DB) {
 		db.Save(&up)
 
 		var user data.UserProfile
-		db.Where(&data.UserProfile{UserId: userId}).FirstOrInit(&user)
+		db.Where(&data.UserProfile{UserId: userId}).FirstOrCreate(&user)
 		user.Location = userLocation
 		user.UserName = usernameText
 		db.Save(&user)
@@ -102,7 +102,7 @@ func ExtractThreadDetail(be *colly.HTMLElement, db *gorm.DB) {
 	var thread data.Thread
 	db.Where(&data.Thread{
 		ThreadId: threadId,
-	}).FirstOrInit(&thread)
+	}).FirstOrCreate(&thread)
 	thread.Tags = tags
 	thread.OwnerId = ownerId
 	thread.OwnerUser = ownerName
