@@ -81,12 +81,13 @@ func ExtractUserDetails(be *colly.HTMLElement, db *gorm.DB) {
 		friendLink, _ := url.Parse(ef.ChildAttr("a.bigusername", "href"))
 		friendId, _ := strconv.ParseInt(friendLink.Query().Get("u"), 0, 0)
 
-		var friendUser data.Thread
+		var friendUser data.UserProfile
 		db.Where(&data.UserProfile{
 			UserId: friendId,
 		}).FirstOrInit(&friendUser)
+		friendUser.UserId = friendId
+		friendUser.UserName = friendUserName
 		db.Save(&friendUser)
-		friendUser.OwnerUser = friendUserName
 		friendList = append(friendList, friendId)
 	})
 	// Visitor Detail
