@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/gocolly/colly/v2"
 	"github.com/jinzhu/gorm"
+	"log"
 	"net/url"
 	"strconv"
 	"strings"
@@ -72,7 +73,7 @@ func ExtractThreadDetail(be *colly.HTMLElement, db *gorm.DB) {
 		postLink, _ := url.Parse(element.ChildAttr("div div table.tborder tbody tr td.thead div.smallfont a", "href"))
 		postId, _ := strconv.ParseInt(postLink.Query().Get("p"), 0, 0)
 		if len(relatedPosts) > 0 {
-			fmt.Println("Related Post with  ", postId)
+			log.Println("Related Post with  ", postId)
 		}
 
 		var up data.UserPost
