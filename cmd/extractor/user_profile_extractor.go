@@ -14,9 +14,11 @@ import (
 Extract And Store Profile Details
 */
 func ExtractUserDetails(be *colly.HTMLElement, db *gorm.DB) {
+	//db := dbVal.Begin()
 	pageUrl := be.Request.URL
 	if pageUrl.Path != "/forum/member.php" {
 		return
+		//errors.New("invalid url")
 	}
 	userProfileId, _ := strconv.ParseInt(be.Request.URL.Query().Get("u"), 0, 0)
 
@@ -154,4 +156,5 @@ func ExtractUserDetails(be *colly.HTMLElement, db *gorm.DB) {
 			db.Save(&vm)
 		}
 	})
+	//return db.Commit().Error
 }

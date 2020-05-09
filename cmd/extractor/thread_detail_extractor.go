@@ -15,9 +15,10 @@ import (
 Extract And Store Profile Details
 */
 func ExtractThreadDetail(be *colly.HTMLElement, db *gorm.DB) {
+	//db := dbVal.Begin()
 	pageUrl := be.Request.URL
 	if pageUrl.Path != "/forum/showthread.php" {
-		return
+		return //errors.New("invalid url")
 	}
 	baseURL := be.Request.URL
 	pageId := baseURL.Query().Get("page")
@@ -114,5 +115,5 @@ func ExtractThreadDetail(be *colly.HTMLElement, db *gorm.DB) {
 
 	db.Save(&thread)
 	fmt.Println(thread.Title)
-
+	//return db.Commit().Error
 }

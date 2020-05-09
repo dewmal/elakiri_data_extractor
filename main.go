@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/url"
 	"os"
+	"sync"
 	"time"
 	"webcrawler/cmd/data"
 	"webcrawler/cmd/extractor"
@@ -83,32 +84,48 @@ func ParseFlags() (string, error) {
 	return configPath, nil
 }
 
-func main() {
-	// by the user in the flags
-	cfgPath, err := ParseFlags()
-	if err != nil {
-		log.Fatal(err)
-	}
-	cfg, err := NewConfig(cfgPath)
-	if err != nil {
-		log.Fatal(err)
-	}
+var db *gorm.DB
+var cfg *Config
+var doOnce sync.Once
 
-	dsn := url.URL{
-		User:     url.UserPassword(cfg.Crawler.DB.UserName, cfg.Crawler.DB.Password),
-		Scheme:   "postgres",
-		Host:     fmt.Sprintf("%s:%s", cfg.Crawler.DB.Host, cfg.Crawler.DB.Port),
-		Path:     cfg.Crawler.DB.DataBase,
-		RawQuery: (&url.Values{"sslmode": []string{"disable"}}).Encode(),
-	}
-	log.Println(dsn.String())
-	db, err := gorm.Open("postgres", dsn.String())
-	db.LogMode(true)
-	if err != nil {
-		println(err)
-		panic("failed to connect database")
-	}
-	defer db.Close()
+func init() {
+	doOnce.Do(func() {
+
+		// by the user in the flags
+		cfgPath, err := ParseFlags()
+		if err != nil {
+			log.Fatal(err)
+		}
+		cfg, err = NewConfig(cfgPath)
+		if err != nil {
+			log.Fatal(err)
+		}
+		dsn := url.URL{
+			User:     url.UserPassword(cfg.Crawler.DB.UserName, cfg.Crawler.DB.Password),
+			Scheme:   "postgres",
+			Host:     fmt.Sprintf("%s:%s", cfg.Crawler.DB.Host, cfg.Crawler.DB.Port),
+			Path:     cfg.Crawler.DB.DataBase,
+			RawQuery: (&url.Values{"sslmode": []string{"disable"}}).Encode(),
+		}
+		log.Println(dsn.String())
+		db, err = gorm.Open("postgres", dsn.String())
+
+		db.LogMode(true)
+		if err != nil {
+			println(err)
+			panic("failed to connect database")
+		}
+		db.DB().SetMaxIdleConns(10)
+		db.DB().SetMaxOpenConns(100)
+	})
+
+}
+
+func main() {
+	defer func() {
+		log.Println("Error Happened")
+		db.Close()
+	}()
 
 	// Migrate the schema
 	db.AutoMigrate(&data.UserPost{})
@@ -187,13 +204,13 @@ func main() {
 	})
 
 	c.OnRequest(func(r *colly.Request) {
-		log.Println("Visiting", r.URL)
+		//log.Println("Visiting", r.URL)
 	})
 	postDataCollector.OnRequest(func(r *colly.Request) {
-		log.Println("Visiting Thread", r.URL)
+		//log.Println("Visiting Thread", r.URL)
 	})
 	userDataCollector.OnRequest(func(r *colly.Request) {
-		log.Println("Visiting User Profile", r.URL)
+		//log.Println("Visiting User Profile", r.URL)
 	})
 
 	c.Visit("http://www.elakiri.com")
