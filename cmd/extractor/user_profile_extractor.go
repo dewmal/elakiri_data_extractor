@@ -152,7 +152,6 @@ func ExtractUserDetails(be *colly.HTMLElement, db *gorm.DB) {
 			up.PostTimeVal = messageTimeString
 			up.PostTime = messageTime
 			up.PostType = data.PostTypeEnum.VisitorPost
-			up.PostId = postId
 			db.Save(&up)
 		}
 	})
