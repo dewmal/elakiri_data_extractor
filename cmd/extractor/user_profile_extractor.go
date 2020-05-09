@@ -140,7 +140,8 @@ func ExtractUserDetails(be *colly.HTMLElement, db *gorm.DB) {
 			var vm data.UserPost
 			db.Where(&data.UserPost{
 				PostId: postId,
-			}).FirstOrInit(&userProfile)
+			}).FirstOrInit(&vm)
+
 			vm.Username = usernameText
 			vm.UserId = userId
 			vm.Message = messageBody
