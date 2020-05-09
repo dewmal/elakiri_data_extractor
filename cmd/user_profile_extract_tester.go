@@ -33,10 +33,10 @@ func main() {
 
 	c := colly.NewCollector()
 	c.OnHTML("body", func(be *colly.HTMLElement) {
-		extractor.ExtractUserDetails(be, db)
-		//extractor.ExtractThreadDetail(be, db)
+		//extractor.ExtractUserDetails(be, db)
+		extractor.ExtractThreadDetail(be, db)
 	})
-	//c.Visit("http://www.elakiri.com/forum/showthread.php?t=1937695")
-	c.Visit("http://www.elakiri.com/forum/member.php?u=563111")
+	//c.Visit("http://www.elakiri.com/forum/showthread.php?t=1937825&page=19")
+	//c.Visit("http://www.elakiri.com/forum/member.php?u=563111")
 	//385820
 }

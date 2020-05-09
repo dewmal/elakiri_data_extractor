@@ -38,6 +38,23 @@ func ExtractThreadDetail(be *colly.HTMLElement, db *gorm.DB) {
 		userLocation := strings.Replace(element.ChildTexts("div.postbit_box div")[2], "Location:", "", -1)
 
 		messageBody := element.ChildTexts("div.vb_postbit")[0]
+
+		//relatedPosts := element.ChildTexts("vb_postbit")
+		var relatedPosts []int64
+
+		element.ForEach("div.vb_postbit", func(i int, element *colly.HTMLElement) {
+			element.ForEach("a", func(i int, element *colly.HTMLElement) {
+				quoteUrl, _ := url.Parse(element.Attr("href"))
+				//fmt.Println(quoteUrl.String())
+				if strings.HasSuffix(quoteUrl.Path, "showthread.php") {
+					//fmt.Println("Show Thread ",quoteUrl.String())
+					quoteId, _ := strconv.ParseInt(quoteUrl.Query().Get("p"), 10, 64)
+					relatedPosts = append(relatedPosts, quoteId)
+				}
+			})
+
+		})
+
 		var messageBodySource string
 		element.ForEach("div.vb_postbit", func(i int, element *colly.HTMLElement) {
 			htmlVal, _ := element.DOM.Html()
@@ -54,6 +71,9 @@ func ExtractThreadDetail(be *colly.HTMLElement, db *gorm.DB) {
 
 		postLink, _ := url.Parse(element.ChildAttr("div div table.tborder tbody tr td.thead div.smallfont a", "href"))
 		postId, _ := strconv.ParseInt(postLink.Query().Get("p"), 0, 0)
+		if len(relatedPosts) > 0 {
+			fmt.Println("Related Post with  ", postId)
+		}
 
 		var up data.UserPost
 		db.Where(&data.UserPost{
@@ -70,6 +90,7 @@ func ExtractThreadDetail(be *colly.HTMLElement, db *gorm.DB) {
 		up.PostTime = messageTime
 		up.PostType = data.PostTypeEnum.ThreadPost
 		up.ThreadId = threadId
+		up.RelatedPosts = relatedPosts
 
 		db.Save(&up)
 

@@ -29,6 +29,7 @@ type UserPost struct {
 	PostTime      time.Time
 	PostType      Alias
 	ThreadId      int64
+	RelatedPosts  pq.Int64Array `gorm:"type:BigInt[];column:related_posts"`
 }
 
 type UserFriend struct {
