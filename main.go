@@ -11,6 +11,7 @@ import (
 	"os"
 	"sync"
 	"time"
+	"webcrawler/cmd/dao"
 	"webcrawler/cmd/data"
 	"webcrawler/cmd/extractor"
 )
@@ -110,7 +111,7 @@ func init() {
 		log.Println(dsn.String())
 		db, err = gorm.Open("postgres", dsn.String())
 
-		db.LogMode(true)
+		db.LogMode(false)
 		if err != nil {
 			println(err)
 			panic("failed to connect database")
@@ -132,6 +133,13 @@ func main() {
 	db.AutoMigrate(&data.UserProfile{})
 	db.AutoMigrate(&data.Thread{})
 	db.AutoMigrate(&data.ErrorVisitedUrl{})
+	db.AutoMigrate(&data.VisitorMessage{})
+
+	var streamPost = make(chan data.UserPost)
+	var streamProfile = make(chan data.UserProfile)
+	var streamThread = make(chan data.Thread)
+	var streamVisitorMessage = make(chan data.VisitorMessage)
+	//var userErrorVisitedUrls = make(chan data.UserPost)
 
 	c := colly.NewCollector(
 		colly.AllowedDomains("elakiri.com", "www.elakiri.com"),
@@ -153,6 +161,7 @@ func main() {
 
 	postDataCollector := c.Clone()
 	userDataCollector := c.Clone()
+	//conversationCollector := c.Clone()
 
 	visitURL := func(pageUrlString string) {
 		pageUrl, _ := url.Parse(pageUrlString)
@@ -160,6 +169,9 @@ func main() {
 			postDataCollector.Visit(pageUrlString)
 		} else if pageUrl.Path == "/forum/member.php" {
 			userDataCollector.Visit(pageUrlString)
+			//}
+			//else if pageUrl.Path == "/converse.php" {
+			//conversationCollector.Visit(pageUrlString)
 		} else {
 			c.Visit(pageUrlString)
 		}
@@ -187,7 +199,16 @@ func main() {
 				log.Printf("Recovering from panic in printAllOperations error is: %v \n", err)
 				log.Println("Extracting Thread Data ", e.Request.URL.Query().Get("t"))
 			}
-			extractor.ExtractUserDetails(e, db)
+			userProfile, visitorMessages, friendList, er := extractor.ExtractUserDetails(e)
+			if er == nil {
+				streamProfile <- userProfile
+				for _, visitorMessage := range visitorMessages {
+					streamVisitorMessage <- visitorMessage
+				}
+				for _, profile := range friendList {
+					streamProfile <- profile
+				}
+			}
 		}()
 	})
 	postDataCollector.OnHTML("body", func(e *colly.HTMLElement) {
@@ -198,22 +219,47 @@ func main() {
 				log.Printf("Recovering from panic in printAllOperations error is: %v \n", err)
 				log.Println("Extracting Thread Data ", e.Request.URL.Query().Get("t"))
 			}
-			extractor.ExtractThreadDetail(e, db)
+			thread, userPosts, userProfiles, er := extractor.ExtractThreadDetail(e)
+
+			if er == nil {
+				streamThread <- thread
+				for _, post := range userPosts {
+					streamPost <- post
+				}
+				for _, profile := range userProfiles {
+					streamProfile <- profile
+				}
+			}
+
 		}()
 
 	})
 
-	c.OnRequest(func(r *colly.Request) {
-		//log.Println("Visiting", r.URL)
-	})
-	postDataCollector.OnRequest(func(r *colly.Request) {
-		//log.Println("Visiting Thread", r.URL)
-	})
-	userDataCollector.OnRequest(func(r *colly.Request) {
-		//log.Println("Visiting User Profile", r.URL)
-	})
-
 	c.Visit("http://www.elakiri.com")
+	var profileStreamCount int = 0
+	var postStreamCount int = 0
+	var visistorMessageStreamCount int = 0
+	var threadStreamCount int = 0
+	for {
+		select {
+		case userProfile := <-streamProfile:
+			dao.SaveUserProfile(db, userProfile)
+			profileStreamCount++
+			log.Println("Incoming User Profile ", profileStreamCount, userProfile.UserId)
+		case userPost := <-streamPost:
+			dao.SaveUserPost(db, userPost)
+			postStreamCount++
+			log.Println("Incoming User Post ", postStreamCount, userPost.PostId, userPost.ThreadId, userPost.PostType)
+		case visitorMessage := <-streamVisitorMessage:
+			dao.SaveVisitorPost(db, visitorMessage)
+			visistorMessageStreamCount++
+			log.Println("Incoming Visitor Message Post ", visistorMessageStreamCount, visitorMessage.PostUserId, visitorMessage.FriendUserId, visitorMessage.PostType)
+		case thread := <-streamThread:
+			dao.SaveThread(db, thread)
+			threadStreamCount++
+			log.Println("Incoming Thread Detail ", threadStreamCount, thread.ThreadId)
+		}
+	}
 
 	c.Wait()
 }

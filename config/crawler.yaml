@@ -1,5 +1,5 @@
 crawler:
-  parallelCount: 4
+  parallelCount: 100
   delay: 2
   db:
     host: localhost

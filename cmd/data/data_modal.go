@@ -17,6 +17,19 @@ var PostTypeEnum = &postType{
 	ThreadPost:  2,
 }
 
+type VisitorMessage struct {
+	gorm.Model
+	PostUserId     int64
+	FriendUserId   int64
+	PostUserName   string
+	FriendUserName string
+	Message        string
+	RawMessage     string
+	PostTimeVal    string
+	PostTime       time.Time
+	PostType       Alias
+}
+
 type UserPost struct {
 	gorm.Model
 	PostId        int64 `gorm:"unique;not null"`
