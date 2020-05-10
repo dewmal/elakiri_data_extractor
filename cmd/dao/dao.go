@@ -46,6 +46,12 @@ func SaveThread(db *gorm.DB, thread data.Thread) {
 	if thread.Rating != 0 {
 		dbThread.Rating = thread.Rating
 	}
+	//Extracted URL
+	if thread.ExtractedUrl != "" {
+		dbThread.ExtractedUrl = thread.ExtractedUrl
+	}
+
+	db.Save(&dbThread)
 }
 
 func SaveUserPost(db *gorm.DB, userPost data.UserPost) {
@@ -84,6 +90,12 @@ func SaveUserPost(db *gorm.DB, userPost data.UserPost) {
 	if userPost.RelatedPosts != nil {
 		dbUserPost.RelatedPosts = userPost.RelatedPosts
 	}
+	//Extracted URL
+	if userPost.ExtractedUrl != "" {
+		dbUserPost.ExtractedUrl = userPost.ExtractedUrl
+	}
+
+	db.Save(&dbUserPost)
 
 	//PostCount
 	//Username
@@ -133,6 +145,10 @@ func SaveUserProfile(db *gorm.DB, userProfile data.UserProfile) {
 	}
 	if userProfile.TotalPageVisit != 0 {
 		dbUserProfile.TotalPageVisit = userProfile.TotalPageVisit
+	}
+	//Extracted URL
+	if userProfile.ExtractedUrl != "" {
+		dbUserProfile.ExtractedUrl = userProfile.ExtractedUrl
 	}
 
 	db.Save(&dbUserProfile)
