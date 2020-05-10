@@ -1,8 +1,8 @@
 package extractor
 
 import (
+	"errors"
 	"github.com/gocolly/colly/v2"
-	"github.com/jinzhu/gorm"
 	"net/url"
 	"strconv"
 	"strings"
@@ -13,12 +13,15 @@ import (
 /**
 Extract And Store Profile Details
 */
-func ExtractUserDetails(be *colly.HTMLElement, db *gorm.DB) {
-	//db := dbVal.Begin()
+func ExtractUserDetails(be *colly.HTMLElement) (data.UserProfile, []data.VisitorMessage, []data.UserProfile, error) {
+
+	var dataFriendList []data.UserProfile
+	var dataVisitorPosts []data.VisitorMessage
+	var dataUserProfile = data.UserProfile{}
+
 	pageUrl := be.Request.URL
 	if pageUrl.Path != "/forum/member.php" {
-		return
-		//errors.New("invalid url")
+		return dataUserProfile, nil, nil, errors.New("invalid URL")
 	}
 	userProfileId, _ := strconv.ParseInt(be.Request.URL.Query().Get("u"), 0, 0)
 
@@ -83,13 +86,11 @@ func ExtractUserDetails(be *colly.HTMLElement, db *gorm.DB) {
 		friendLink, _ := url.Parse(ef.ChildAttr("a.bigusername", "href"))
 		friendId, _ := strconv.ParseInt(friendLink.Query().Get("u"), 0, 0)
 
-		var friendUser data.UserProfile
-		db.Where(&data.UserProfile{
-			UserId: friendId,
-		}).FirstOrCreate(&friendUser)
-		friendUser.UserId = friendId
-		friendUser.UserName = friendUserName
-		db.Save(&friendUser)
+		friendUser := data.UserProfile{
+			UserId:   friendId,
+			UserName: friendUserName,
+		}
+		dataFriendList = append(dataFriendList, friendUser)
 		friendList = append(friendList, friendId)
 	})
 	// Visitor Detail
@@ -102,24 +103,17 @@ func ExtractUserDetails(be *colly.HTMLElement, db *gorm.DB) {
 	// Get Visitor count
 	totalVisit := be.ChildText("#collapseobj_visitors div.block_row.block_footer strong")
 	totalVisitCount, _ := strconv.ParseInt(strings.Replace(totalVisit, ",", "", -1), 0, 0)
-	// Save user profile
-	var userProfile data.UserProfile
-	db.Where(&data.UserProfile{
-		UserId: userProfileId,
-	}).FirstOrCreate(&userProfile)
-	userProfile.UserName = userName
-	userProfile.UserId = userProfileId
-	userProfile.JoinDateVal = joinDateVal
-	userProfile.JoinDate = joinDate
-	userProfile.TotalPost = totalPost
-	userProfile.MemberStatus = memberStatus
-	userProfile.ReputationRank = reputationRank
-	userProfile.Friends = friendList
-	userProfile.LastVisitors = visitorList
-	userProfile.TotalPageVisit = totalVisitCount
 
-	db.Save(&userProfile)
-	//println(userProfile.ReputationRank)
+	dataUserProfile.UserName = userName
+	dataUserProfile.UserId = userProfileId
+	dataUserProfile.JoinDateVal = joinDateVal
+	dataUserProfile.JoinDate = joinDate
+	dataUserProfile.TotalPost = totalPost
+	dataUserProfile.MemberStatus = memberStatus
+	dataUserProfile.ReputationRank = reputationRank
+	dataUserProfile.Friends = friendList
+	dataUserProfile.LastVisitors = visitorList
+	dataUserProfile.TotalPageVisit = totalVisitCount
 
 	// User Visitor Messages
 	be.ForEach("html body table tbody tr td div div.page div div#usercss.floatcontainer div#content_container div#content div#profile_tabs div#visitor_messaging.tborder.content_block div#collapseobj_visitor_messaging.block_content ol#message_list.alt1.block_row.list_no_decoration li", func(i int, element *colly.HTMLElement) {
@@ -136,24 +130,26 @@ func ExtractUserDetails(be *colly.HTMLElement, db *gorm.DB) {
 		messageTime, _ := time.Parse("01-02-2006 03:04 PM", messageTimeString) //11-28-2019 11:31 AM
 		userLink, _ := url.Parse(element.ChildAttr("a.username", "href"))
 		userId, _ := strconv.ParseInt(userLink.Query().Get("u"), 0, 0)
-		postLink, _ := url.Parse(element.ChildAttr("ul li a", "href"))
-		postId, _ := strconv.ParseInt(postLink.Query().Get("u1"), 0, 0)
 
+		//println("Post ID ", postId, postLink.String())
 		if userId != 0 {
-			var up data.UserPost
-			db.Where(&data.UserPost{
-				PostId: postId,
-			}).FirstOrCreate(&up)
 
-			up.Username = usernameText
-			up.UserId = userId
+			var up = data.VisitorMessage{}
+			up.PostUserName = usernameText
+			up.PostUserId = userId
+
+			up.FriendUserId = dataUserProfile.UserId
+			up.FriendUserName = dataUserProfile.UserName
+
 			up.Message = messageBody
-			up.MessageSource = messageBodySource
+			up.RawMessage = messageBodySource
 			up.PostTimeVal = messageTimeString
 			up.PostTime = messageTime
 			up.PostType = data.PostTypeEnum.VisitorPost
-			db.Save(&up)
+
+			dataVisitorPosts = append(dataVisitorPosts, up)
 		}
 	})
-	//return db.Commit().Error
+
+	return dataUserProfile, dataVisitorPosts, dataFriendList, nil
 }

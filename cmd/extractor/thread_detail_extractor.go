@@ -1,10 +1,8 @@
 package extractor
 
 import (
-	"fmt"
+	"errors"
 	"github.com/gocolly/colly/v2"
-	"github.com/jinzhu/gorm"
-	"log"
 	"net/url"
 	"strconv"
 	"strings"
@@ -15,11 +13,14 @@ import (
 /**
 Extract And Store Profile Details
 */
-func ExtractThreadDetail(be *colly.HTMLElement, db *gorm.DB) {
+func ExtractThreadDetail(be *colly.HTMLElement) (data.Thread, []data.UserPost, []data.UserProfile, error) {
+	var dataUserPosts []data.UserPost
+	var dataUserProfiles []data.UserProfile
+	var dataThread data.Thread = data.Thread{}
 	//db := dbVal.Begin()
 	pageUrl := be.Request.URL
 	if pageUrl.Path != "/forum/showthread.php" {
-		return //errors.New("invalid url")
+		return dataThread, nil, nil, errors.New("invalid URL") //errors.New("invalid url")
 	}
 	baseURL := be.Request.URL
 	pageId := baseURL.Query().Get("page")
@@ -30,7 +31,7 @@ func ExtractThreadDetail(be *colly.HTMLElement, db *gorm.DB) {
 	var ownerId int64
 	var postTime time.Time
 
-	be.ForEachWithBreak("div#posts div div.page", func(i int, element *colly.HTMLElement) bool {
+	be.ForEach("div#posts div div.page", func(i int, element *colly.HTMLElement) {
 
 		usernameText := element.ChildText("a.bigusername")
 		userLink, _ := url.Parse(element.ChildAttr("a.bigusername", "href"))
@@ -47,7 +48,7 @@ func ExtractThreadDetail(be *colly.HTMLElement, db *gorm.DB) {
 			element.ForEach("a", func(i int, element *colly.HTMLElement) {
 				quoteUrl, _ := url.Parse(element.Attr("href"))
 				//fmt.Println(quoteUrl.String())
-				if strings.HasSuffix(quoteUrl.Path, "showthread.php") {
+				if quoteUrl != nil && strings.HasSuffix(quoteUrl.Path, "showthread.php") {
 					//fmt.Println("Show Thread ",quoteUrl.String())
 					quoteId, _ := strconv.ParseInt(quoteUrl.Query().Get("p"), 10, 64)
 					relatedPosts = append(relatedPosts, quoteId)
@@ -72,41 +73,34 @@ func ExtractThreadDetail(be *colly.HTMLElement, db *gorm.DB) {
 
 		postLink, _ := url.Parse(element.ChildAttr("div div table.tborder tbody tr td.thead div.smallfont a", "href"))
 		postId, _ := strconv.ParseInt(postLink.Query().Get("p"), 0, 0)
-		if len(relatedPosts) > 0 {
-			log.Println("Related Post with  ", postId)
-		}
 
-		var up data.UserPost
-		db.Where(&data.UserPost{
-			PostId: postId,
-		}).FirstOrCreate(&up)
+		var dataUserPost data.UserPost = data.UserPost{}
+		dataUserPost.ThreadId = threadId
+		dataUserPost.PostId = postId
+		dataUserPost.Username = usernameText
+		dataUserPost.UserId = userId
+		dataUserPost.Message = messageBody
+		dataUserPost.MessageSource = messageBodySource
+		dataUserPost.PostTimeVal = messageTimeString
+		dataUserPost.PostTime = messageTime
+		dataUserPost.PostType = data.PostTypeEnum.ThreadPost
+		dataUserPost.ThreadId = threadId
+		dataUserPost.RelatedPosts = relatedPosts
 
-		up.ThreadId = threadId
-		up.PostId = postId
-		up.Username = usernameText
-		up.UserId = userId
-		up.Message = messageBody
-		up.MessageSource = messageBodySource
-		up.PostTimeVal = messageTimeString
-		up.PostTime = messageTime
-		up.PostType = data.PostTypeEnum.ThreadPost
-		up.ThreadId = threadId
-		up.RelatedPosts = relatedPosts
+		dataUserPosts = append(dataUserPosts, dataUserPost)
 
-		db.Save(&up)
-
-		var user data.UserProfile
-		db.Where(&data.UserProfile{UserId: userId}).FirstOrCreate(&user)
+		var user data.UserProfile = data.UserProfile{}
 		user.Location = userLocation
 		user.UserName = usernameText
-		db.Save(&user)
+		user.UserId = userId
+
+		dataUserProfiles = append(dataUserProfiles, user)
 
 		if isOpenPage && i == 0 {
 			ownerName = user.UserName
 			ownerId = user.UserId
 			postTime = messageTime
 		}
-		return true
 	})
 
 	var tags []string
@@ -121,21 +115,16 @@ func ExtractThreadDetail(be *colly.HTMLElement, db *gorm.DB) {
 
 	title := be.ChildText("div.page div table.tborder tbody tr td.alt1 table tbody tr td.smallfont strong")
 
-	var thread data.Thread
-	db.Where(&data.Thread{
-		ThreadId: threadId,
-	}).FirstOrCreate(&thread)
-	thread.Tags = tags
-	thread.OwnerId = ownerId
-	thread.OwnerUser = ownerName
-	thread.Categories = categories
-	thread.Title = title
+	dataThread.ThreadId = threadId
+	dataThread.Tags = tags
+	dataThread.OwnerId = ownerId
+	dataThread.OwnerUser = ownerName
+	dataThread.Categories = categories
+	dataThread.Title = title
 
-	if postTime != (time.Time{}) {
-		thread.PostDateTime = postTime
+	if postTime == (time.Time{}) {
+		dataThread.PostDateTime = postTime
 	}
 
-	db.Save(&thread)
-	fmt.Println(thread.Title)
-	//return db.Commit().Error
+	return dataThread, dataUserPosts, dataUserProfiles, nil
 }
