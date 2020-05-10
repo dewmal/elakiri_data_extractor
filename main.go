@@ -201,11 +201,14 @@ func main() {
 			}
 			userProfile, visitorMessages, friendList, er := extractor.ExtractUserDetails(e)
 			if er == nil {
+				userProfile.ExtractedUrl = e.Request.URL.String()
 				streamProfile <- userProfile
 				for _, visitorMessage := range visitorMessages {
+					visitorMessage.ExtractedUrl = e.Request.URL.String()
 					streamVisitorMessage <- visitorMessage
 				}
 				for _, profile := range friendList {
+					profile.ExtractedUrl = e.Request.URL.String()
 					streamProfile <- profile
 				}
 			}
@@ -222,11 +225,14 @@ func main() {
 			thread, userPosts, userProfiles, er := extractor.ExtractThreadDetail(e)
 
 			if er == nil {
+				thread.ExtractedUrl = e.Request.URL.String()
 				streamThread <- thread
 				for _, post := range userPosts {
+					post.ExtractedUrl = e.Request.URL.String()
 					streamPost <- post
 				}
 				for _, profile := range userProfiles {
+					profile.ExtractedUrl = e.Request.URL.String()
 					streamProfile <- profile
 				}
 			}

@@ -28,6 +28,7 @@ type VisitorMessage struct {
 	PostTimeVal    string
 	PostTime       time.Time
 	PostType       Alias
+	ExtractedUrl   string
 }
 
 type UserPost struct {
@@ -43,11 +44,13 @@ type UserPost struct {
 	PostType      Alias
 	ThreadId      int64
 	RelatedPosts  pq.Int64Array `gorm:"type:BigInt[];column:related_posts"`
+	ExtractedUrl  string
 }
 
 type UserFriend struct {
-	UserName string
-	UserId   string
+	UserName     string
+	UserId       string
+	ExtractedUrl string
 }
 
 type UserProfile struct {
@@ -63,6 +66,7 @@ type UserProfile struct {
 	Friends        pq.Int64Array `gorm:"type:BigInt[];column:friend_list"`
 	LastVisitors   pq.Int64Array `gorm:"type:BigInt[];column:last_visitor_list"`
 	Location       string
+	ExtractedUrl   string
 }
 
 type Thread struct {
@@ -75,6 +79,7 @@ type Thread struct {
 	Categories   pq.StringArray `gorm:"type:VARCHAR(50)[];column:categories"`
 	Tags         pq.StringArray `gorm:"type:VARCHAR(50)[];column:tags"`
 	Rating       int64
+	ExtractedUrl string
 }
 
 type ErrorVisitedUrl struct {
